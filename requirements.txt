@@ -1,0 +1,7 @@
+fastapi
+openai
+uvicorn
+httpx
+python-dotenv
+redis
+firebase-admin

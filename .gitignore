@@ -1,0 +1,18 @@
+# Ignore test script
+src/test.py
+
+# Ignore all Jupyter Notebooks
+*.ipynb
+
+# Ignore Firebase credentials
+firebase_creds.json
+
+# Ignore environment variables
+.env
+
+# Optional: Ignore Python bytecode and cache
+__pycache__/
+*.py[cod]
+
+# Optional: Ignore audio outputs directory (if not needed in repo)
+src/audio_outputs/
