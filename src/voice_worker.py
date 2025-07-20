@@ -8,6 +8,16 @@ from redis_utils import r
 from dotenv import load_dotenv
 from elevenlabs import play
 import re
+from tenacity import retry, stop_after_attempt, wait_fixed
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 API_KEY = os.getenv("ELEVEN_API_KEY")
@@ -24,7 +34,7 @@ def clean_script(text: str) -> str:
     """
     return re.sub(r'[\-,_\*"\'\'\(\)\[\]\{\}\:;\.!\?]', '', text)
 
-
+# @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 def generate_voice(script_text, job_id):
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
 
@@ -99,22 +109,22 @@ def generate_voice(script_text, job_id):
 
 
 def process_voice_jobs():
-    print("Voice worker started...")
+    logger.info("Voice worker started...")
     while True:
         try:
             job_id = r.brpop("voice_queue", timeout=5)
             if job_id:
                 job_id = job_id[1].decode()
-                print(f"Processing voice for job: {job_id}")
+                logger.info(f"Processing voice for job: {job_id}")
 
                 job_data = get_job(job_id)
                 if not job_data or not job_data.get("script"):
-                    print(f"Missing job/script for {job_id}")
+                    logger.info(f"Missing job/script for {job_id}")
                     continue
 
                 script = job_data["script"]
-                clean_script = clean_script(script)
-                audio_path= generate_voice(clean_script, job_id)
+                cleaned_script = clean_script(script)
+                audio_path= generate_voice(cleaned_script, job_id)
                 
                 update_job_status(job_id, {
                     "voice_url": audio_path,
@@ -122,10 +132,10 @@ def process_voice_jobs():
                 })
 
                 r.lpush("video_queue", job_id)
-                print(f"Voice done for {job_id}, pushed to video_queue")
+                logger.info(f"Voice done for {job_id}, pushed to video_queue")
 
         except Exception as e:
-            print("Error in voice worker:", e)
+            logger.error("Error in voice worker:", e)
             time.sleep(2)
 
 if __name__ == "__main__":
