@@ -1,5 +1,6 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+import job_schema
 from job_schema import JobRequest, generate_job
 from redis_utils import push_to_queue
 from firebase_utils import save_job_to_firestore
@@ -22,6 +23,8 @@ def submit_job(job: JobRequest):
         return {"message": "Job submitted", "job_id": job_id}
     except Exception as e:
         logger.error(f"Error occured in submitting job: {e}")
+    if not isinstance(job.niche, str) or not isinstance(job.topic, str):
+        raise HTTPException(status_code=400, detail="Invalid inputs")
         
     
 
