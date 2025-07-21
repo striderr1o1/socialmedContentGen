@@ -16,3 +16,5 @@ __pycache__/
 
 # Optional: Ignore audio outputs directory (if not needed in repo)
 src/audio_outputs/
+
+extractor_module.py
